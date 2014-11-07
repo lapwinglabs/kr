@@ -26,8 +26,8 @@ $ npm install kr
   Contrived resource-oriented example:
 
 ```js
-var _ = require('koa-route');
 var koa = require('koa');
+var kr = require('kr');
 var app = koa();
 
 var db = {
@@ -55,8 +55,8 @@ var pets = {
   }
 };
 
-app.use(_.get('/pets', authenticate, pets.list));
-app.use(_.get('/pets/:name', authenticate, pets.show));
+app.use(kr.get('/pets', authenticate, pets.list));
+app.use(kr.get('/pets/:name', authenticate, pets.show));
 
 app.listen(3000);
 console.log('listening on port 3000');
