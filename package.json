@@ -1,0 +1,25 @@
+{
+  "name": "kr",
+  "version": "0.0.1",
+  "description": "simple express-like routing for koa and roo",
+  "keywords": [],
+  "author": "Matthew Mueller <matt@lapwinglabs.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lapwinglabs/kr.git"
+  },
+  "dependencies": {
+    "debug": "^2.1.0",
+    "koa-compose": "^2.3.0",
+    "methods": "^1.1.0",
+    "path-to-regexp": "^1.0.1",
+    "sliced": "0.0.5"
+  },
+  "devDependencies": {
+    "koa": "^0.13.0",
+    "mocha": "^2.0.1",
+    "should": "*",
+    "supertest": "^0.14.0"
+  },
+  "main": "index"
+}

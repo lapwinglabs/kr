@@ -1,0 +1,179 @@
+var request = require('supertest');
+var koa = require('koa');
+
+var methods = require('methods').map(function(method){
+  // normalize method names for tests
+  if (method == 'delete') method = 'del';
+  if (method == 'connect') return; // WTF
+  return method;
+}).filter(Boolean)
+
+var route = require('..');
+
+methods.forEach(function(method){
+  var app = koa();
+  app.use(route[method]('/:user(tj)', function*(next){
+    this.body = this.params.user;
+  }))
+
+  describe('route.' + method + '()', function(){
+    describe('when method and path match', function(){
+      it('should 200', function(done){
+        request(app.listen())
+        [method]('/tj')
+        .expect(200)
+        .expect(method === 'head' ? '' : 'tj', done);
+      })
+    })
+
+    describe('when only method matches', function(){
+      it('should 404', function(done){
+        request(app.listen())
+        [method]('/tjayyyy')
+        .expect(404, done);
+      })
+    })
+
+    describe('when only path matches', function(){
+      it('should 404', function(done){
+        request(app.listen())
+        [method === 'get' ? 'post' : 'get']('/tj')
+        .expect(404, done);
+      })
+    })
+  })
+})
+
+describe('route.all()', function(){
+  describe('should work with', function(){
+    methods.forEach(function(method){
+      var app = koa();
+      app.use(route.all('/:user(tj)', function*(next){
+        this.body = this.params.user;
+      }))
+
+      it(method, function(done){
+        request(app.listen())
+        [method]('/tj')
+        .expect(200)
+        .expect(method === 'head' ? '' : 'tj', done);
+      })
+    })
+  })
+
+  describe('when patch does not match', function(){
+    it('should 404', function (done){
+      var app = koa();
+      app.use(route.all('/:user(tj)', function*(user){
+        this.body = user;
+      }))
+
+      request(app.listen())
+      .get('/tjayyyyyy')
+      .expect(404, done);
+    })
+  })
+})
+
+describe('route params', function(){
+  methods.forEach(function(method){
+    var app = koa();
+
+    app.use(route[method]('/:user(tj)', function*(next){
+      yield next;
+    }))
+
+    app.use(route[method]('/:user(tj)', function*(next){
+      this.body = this.params.user;
+      yield next;
+    }))
+
+    app.use(route[method]('/:user(tj)', function*(){
+      this.status = 201;
+    }))
+
+    it('should work with method ' + method, function(done){
+      request(app.listen())
+        [method]('/tj')
+        .expect(201)
+        .expect(method === 'head' ? '' : 'tj', done);
+    })
+  })
+
+  it('should be decoded', function(done){
+    var app = koa();
+
+    app.use(route.get('/package/:name', function *(){
+      var name = this.params.name;
+      name.should.equal('http://github.com/component/tip');
+      done();
+    }));
+
+    request(app.listen())
+    .get('/package/' + encodeURIComponent('http://github.com/component/tip'))
+    .end(function(){});
+  })
+
+  it('should be null if not matched', function(done){
+    var app = koa();
+
+    app.use(route.get('/api/:resource/:id?', function *(){
+      var resource = this.params.resource;
+      var id = this.params.id;
+      resource.should.equal('users');
+      (id == null).should.be.true;
+      done();
+    }));
+
+    request(app.listen())
+    .get('/api/users')
+    .end(function(){});
+  })
+
+  it('should fill in this.params regardless', function(done) {
+    var app = koa();
+
+    app.use(route.get('/users', function *(){
+      this.params.should.be.an.Array;
+      done();
+    }));
+
+    request(app.listen())
+    .get('/users')
+    .end(function(){});
+  })
+
+})
+
+describe('route middleware', function() {
+  it('should support multiple functions', function(done) {
+    var app = koa();
+    app.use(route.get('/api/:name', a, b, c));
+
+    function *a(next) {
+      var name = this.params.name;
+      name.should.equal('matt');
+      yield next;
+    }
+
+    function *b(next) {
+      var name = this.params.name;
+      name.should.equal('matt');
+      this.age = 25;
+      yield next;
+    }
+
+    function *c() {
+      var name = this.params.name;
+      name.should.equal('matt');
+      this.age.should.equal(25);
+      this.body = name;
+      this.status = 201;
+    }
+
+    request(app.listen())
+    .get('/api/matt')
+    .expect(201)
+    .expect('matt', done);
+  });
+})
