@@ -10,7 +10,7 @@ app.use(kr.get('/pets/:name', authenticate, pets.show));
 
 ## Features
 
-This repo is essentially a fork of [koa-route](https://github.com/koajs/koa-route), with two API differences:
+This repo is essentially a fork of [koa-route](https://github.com/koajs/route), with two API differences:
 
   - support for route middleware
   - populates `this.params`
