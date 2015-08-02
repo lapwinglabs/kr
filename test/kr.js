@@ -177,3 +177,26 @@ describe('route middleware', function() {
     .expect('matt', done);
   });
 })
+
+describe('passthrough', function() {
+  it('should support passing through matched routes', function(done) {
+    var app = koa();
+    app.use(route.get('/', a));
+    app.use(route.get('/', b));
+
+    function *a (next) {
+      yield next;
+    }
+
+    function *b (next) {
+      this.status = 201
+      this.body = 'matt'
+    }
+
+    request(app.listen())
+    .get('/')
+    .expect(201)
+    .expect('matt', done);
+  });
+})
+
